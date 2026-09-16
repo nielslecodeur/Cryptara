@@ -1,6 +1,8 @@
 use hmac_sha512::HMAC;
 use std::ffi::{CStr, CString, c_char};
 
+use crate::key::{ChainCode, MasterPrivateKey};
+
 unsafe extern "C" {
     fn get_bytes_ptr(out: *mut u8);
     fn get_words(bytes: *const u8, out: *mut *const c_char) -> bool;
@@ -64,13 +66,10 @@ impl Seed {
     pub(crate) fn extract_keys(&self) -> (MasterPrivateKey, ChainCode) {
         let mac = HMAC::mac(b"Bitcoin seed", self.inner);
 
-        let mut mpv = [0u8; 32];
-        let mut cc = [0u8; 32];
+        let master_private_key = MasterPrivateKey::from(&mac[..32]);
+        let chain_code = ChainCode::from(&mac[32..]);
 
-        mpv.copy_from_slice(&mac[0..=31]);
-        cc.copy_from_slice(&mac[32..]);
-
-        (mpv, cc)
+        (master_private_key, chain_code)
     }
 }
 
@@ -81,6 +80,3 @@ impl PartialEq for Seed {
 }
 
 impl Eq for Seed {}
-
-pub(crate) type MasterPrivateKey = [u8; 32];
-pub(crate) type ChainCode = [u8; 32];

@@ -1,6 +1,9 @@
+mod key;
 mod seedforge;
 
 use seedforge::Seed;
+
+use crate::key::MasterPublicKey;
 
 fn main() {
     let bytes = Seed::generate();
@@ -16,4 +19,7 @@ fn main() {
 
     let (mpk, cc) = bytes.extract_keys();
     println!("Master Private Key: {mpk:?}, Chain Code: {cc:?}");
+
+    let master_public_key = MasterPublicKey::from(&mpk);
+    println!("Master Public Key: {master_public_key:?}");
 }
