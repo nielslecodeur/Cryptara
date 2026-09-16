@@ -42,11 +42,15 @@ pub(crate) struct MasterPublicKey {
 }
 
 impl MasterPublicKey {
-    pub(crate) fn generate_child_key(&self, chaincode: ChainCode) -> (MasterPublicKey, ChainCode) {
+    pub(crate) fn generate_n_child_key(
+        &self,
+        chaincode: ChainCode,
+        index: u32,
+    ) -> (MasterPublicKey, ChainCode) {
         let mut data = [0u8; 37];
 
         data[..33].copy_from_slice(&self.inner);
-        data[33..].copy_from_slice(&1u32.to_be_bytes());
+        data[33..].copy_from_slice(&index.to_be_bytes());
 
         let mac = HMAC::mac(data, chaincode.bytes());
 
@@ -60,6 +64,23 @@ impl MasterPublicKey {
             MasterPublicKey::from(child.to_sec1_bytes()),
             ChainCode::from(&mac[32..]),
         )
+    }
+
+    pub(crate) fn generate_nth_child_key(
+        &self,
+        chaincode: ChainCode,
+        n: u32,
+    ) -> (MasterPublicKey, ChainCode) {
+        let (mut current_key, mut current_chaincode) = self.generate_n_child_key(chaincode, 0);
+
+        for index in 1..n {
+            let (next_key, next_chaincode) =
+                current_key.generate_n_child_key(current_chaincode, index);
+            current_key = next_key;
+            current_chaincode = next_chaincode;
+        }
+
+        (current_key, current_chaincode)
     }
 }
 
