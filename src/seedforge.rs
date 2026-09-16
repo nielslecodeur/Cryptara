@@ -29,7 +29,6 @@ impl Seed {
         let mut raw_words: [*const c_char; 12] = [std::ptr::null(); 12];
 
         let success = unsafe { get_words(self.inner.as_ptr(), raw_words.as_mut_ptr()) };
-
         if !success {
             return Err("Failed to get BIP-39 words");
         }
@@ -63,13 +62,13 @@ impl Seed {
         Ok(Self { inner: bytes })
     }
 
-    pub(crate) fn extract_keys(&self) -> (MasterPrivateKey, ChainCode) {
+    pub(crate) fn extract_keys(&self) -> Result<(MasterPrivateKey, ChainCode), &'static str> {
         let mac = HMAC::mac(b"Bitcoin seed", self.inner);
 
-        let master_private_key = MasterPrivateKey::from(&mac[..32]);
-        let chain_code = ChainCode::from(&mac[32..]);
+        let master_private_key = MasterPrivateKey::try_from(&mac[..32])?;
+        let chain_code = ChainCode::try_from(&mac[32..])?;
 
-        (master_private_key, chain_code)
+        Ok((master_private_key, chain_code))
     }
 }
 

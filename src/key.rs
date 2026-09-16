@@ -9,11 +9,15 @@ pub(crate) struct MasterPrivateKey {
     inner: [u8; 32],
 }
 
-impl From<&[u8]> for MasterPrivateKey {
-    fn from(slice: &[u8]) -> Self {
-        Self {
-            inner: slice.try_into().expect("slice must be 32 bytes"),
-        }
+impl TryFrom<&[u8]> for MasterPrivateKey {
+    type Error = &'static str;
+
+    fn try_from(slice: &[u8]) -> Result<Self, Self::Error> {
+        let inner = slice
+            .try_into()
+            .map_err(|_| "master private key must be 32 bytes")?;
+
+        Ok(Self { inner })
     }
 }
 
@@ -28,11 +32,15 @@ impl ChainCode {
     }
 }
 
-impl From<&[u8]> for ChainCode {
-    fn from(slice: &[u8]) -> Self {
-        Self {
-            inner: slice.try_into().expect("slice must be 32 bytes"),
-        }
+impl TryFrom<&[u8]> for ChainCode {
+    type Error = &'static str;
+
+    fn try_from(slice: &[u8]) -> Result<Self, Self::Error> {
+        let inner = slice
+            .try_into()
+            .map_err(|_| "chain code must be 32 bytes")?;
+
+        Ok(Self { inner })
     }
 }
 
@@ -46,45 +54,64 @@ impl MasterPublicKey {
         &self,
         chaincode: &ChainCode,
         index: u32,
-    ) -> (MasterPublicKey, ChainCode) {
+    ) -> Result<(MasterPublicKey, ChainCode), &'static str> {
         let mut data = [0u8; 37];
 
         data[..33].copy_from_slice(&self.inner);
         data[33..].copy_from_slice(&index.to_be_bytes());
 
         let mac = HMAC::mac(data, chaincode.bytes());
+        let parent =
+            PublicKey::from_sec1_bytes(&self.inner).map_err(|_| "invalid parent public key")?;
 
-        let parent = PublicKey::from_sec1_bytes(&self.inner).unwrap();
-        let tweak = Scalar::from_repr(mac[..32].try_into().unwrap()).unwrap();
+        let tweak_bytes: [u8; 32] = mac[..32].try_into().map_err(|_| "invalid HMAC output")?;
+        let tweak = Scalar::from_repr(tweak_bytes.into())
+            .into_option()
+            .ok_or("invalid scalar derived from HMAC")?;
 
         let child = parent.to_projective() + ProjectivePoint::GENERATOR * tweak;
-        let child = PublicKey::from_affine(child.to_affine()).unwrap();
 
-        (
-            MasterPublicKey::from(child.to_sec1_bytes()),
-            ChainCode::from(&mac[32..]),
-        )
+        let child =
+            PublicKey::from_affine(child.to_affine()).map_err(|_| "invalid child public key")?;
+
+        let public_key_bytes: [u8; 33] = child
+            .to_sec1_bytes()
+            .as_ref()
+            .try_into()
+            .map_err(|_| "invalid child public key length")?;
+        let chain_code_bytes: [u8; 32] = mac[32..]
+            .try_into()
+            .map_err(|_| "invalid chain code length")?;
+
+        Ok((
+            MasterPublicKey {
+                inner: public_key_bytes,
+            },
+            ChainCode {
+                inner: chain_code_bytes,
+            },
+        ))
     }
 
     pub(crate) fn generate_mth_0_child_key(
         &self,
         chaincode: &ChainCode,
         level: u32,
-    ) -> (MasterPublicKey, ChainCode) {
+    ) -> Result<(MasterPublicKey, ChainCode), &'static str> {
         if level == 0 {
-            return (self.clone(), chaincode.clone());
+            return Ok((self.clone(), chaincode.clone()));
         }
 
-        let (mut current_key, mut current_chaincode) = self.generate_child_key(chaincode, 0);
-
+        let (mut current_key, mut current_chaincode) = self.generate_child_key(chaincode, 0)?;
         for _ in 1..level {
-            let (next_key, next_chaincode) = current_key.generate_child_key(&current_chaincode, 0);
+            let (next_key, next_chaincode) =
+                current_key.generate_child_key(&current_chaincode, 0)?;
 
             current_key = next_key;
             current_chaincode = next_chaincode;
         }
 
-        (current_key, current_chaincode)
+        Ok((current_key, current_chaincode))
     }
 
     pub(crate) fn generate_nth_mth_0_child_key(
@@ -92,34 +119,44 @@ impl MasterPublicKey {
         chaincode: &ChainCode,
         index: u32,
         level: u32,
-    ) -> (MasterPublicKey, ChainCode) {
+    ) -> Result<(MasterPublicKey, ChainCode), &'static str> {
         if level == 0 {
             return self.generate_child_key(chaincode, index);
         }
 
-        let (mpk, cc) = self.generate_mth_0_child_key(chaincode, level - 1);
+        let (mpk, cc) = self.generate_mth_0_child_key(chaincode, level - 1)?;
         mpk.generate_child_key(&cc, index)
     }
 }
 
-impl From<&MasterPrivateKey> for MasterPublicKey {
-    fn from(private_key: &MasterPrivateKey) -> Self {
+impl TryFrom<&MasterPrivateKey> for MasterPublicKey {
+    type Error = &'static str;
+
+    fn try_from(private_key: &MasterPrivateKey) -> Result<Self, Self::Error> {
         let secret_key =
-            SecretKey::from_slice(&private_key.inner).expect("invalid master private key");
+            SecretKey::from_slice(&private_key.inner).map_err(|_| "invalid master private key")?;
 
         let public_key = secret_key.public_key();
         let encoded = public_key.to_sec1_point(true);
 
-        Self {
-            inner: encoded.as_bytes().try_into().unwrap(),
-        }
+        let inner: [u8; 33] = encoded
+            .as_bytes()
+            .try_into()
+            .map_err(|_| "invalid public key length")?;
+
+        Ok(Self { inner })
     }
 }
 
-impl From<Box<[u8]>> for MasterPublicKey {
-    fn from(bytes: Box<[u8]>) -> Self {
-        Self {
-            inner: bytes.as_ref().try_into().unwrap(),
-        }
+impl TryFrom<Box<[u8]>> for MasterPublicKey {
+    type Error = &'static str;
+
+    fn try_from(bytes: Box<[u8]>) -> Result<Self, Self::Error> {
+        let inner: [u8; 33] = bytes
+            .as_ref()
+            .try_into()
+            .map_err(|_| "master public key must be 33 bytes")?;
+
+        Ok(Self { inner })
     }
 }
