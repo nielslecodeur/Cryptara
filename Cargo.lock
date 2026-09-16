@@ -5,3 +5,12 @@ version = 4
 [[package]]
 name = "cryptara"
 version = "0.1.0"
+dependencies = [
+ "hmac-sha512",
+]
+
+[[package]]
+name = "hmac-sha512"
+version = "1.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "019ece39bbefc17f13f677a690328cb978dbf6790e141a3c24e66372cb38588b"

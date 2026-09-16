@@ -13,4 +13,7 @@ fn main() {
         bytes,
         bytes_verif
     );
+
+    let (mpk, cc) = bytes.extract_keys();
+    println!("Master Private Key: {mpk:?}, Chain Code: {cc:?}");
 }

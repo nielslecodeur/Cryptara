@@ -1,3 +1,4 @@
+use hmac_sha512::HMAC;
 use std::ffi::{CStr, CString, c_char};
 
 unsafe extern "C" {
@@ -59,6 +60,18 @@ impl Seed {
 
         Ok(Self { inner: bytes })
     }
+
+    pub(crate) fn extract_keys(&self) -> (MasterPrivateKey, ChainCode) {
+        let mac = HMAC::mac(b"Bitcoin seed", self.inner);
+
+        let mut mpv = [0u8; 32];
+        let mut cc = [0u8; 32];
+
+        mpv.copy_from_slice(&mac[0..=31]);
+        cc.copy_from_slice(&mac[32..]);
+
+        (mpv, cc)
+    }
 }
 
 impl PartialEq for Seed {
@@ -68,3 +81,6 @@ impl PartialEq for Seed {
 }
 
 impl Eq for Seed {}
+
+pub(crate) type MasterPrivateKey = [u8; 32];
+pub(crate) type ChainCode = [u8; 32];

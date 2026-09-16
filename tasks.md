@@ -9,7 +9,7 @@ Liste des tâches✓
 - [x] Associer chaque groupe de 11 bits à un mot de la liste BIP-39 et afficher la seed sous forme mnémonique — **2 pts**.
 - [x] Permettre l’import d’une seed mnémonique — **2 pts**.
 - [x] Vérifier les clés générées avec https://iancoleman.io/bip39/ — **2 pts**.
-- [ ] Extraire la clé privée maître et le chain code — **2 pts**.
+- [x] Extraire la clé privée maître et le chain code — **2 pts**.
 - [ ] Extraire la clé publique maître — **2 pts**.
 - [ ] Générer une clé enfant — **2 pts**.
 - [ ] Générer une clé enfant à l’index N — **2 pts**.
