@@ -10,7 +10,7 @@ Liste des tâches✓
 - [x] Permettre l’import d’une seed mnémonique — **2 pts**.
 - [x] Vérifier les clés générées avec https://iancoleman.io/bip39/ — **2 pts**.
 - [x] Extraire la clé privée maître et le chain code — **2 pts**.
-- [ ] Extraire la clé publique maître — **2 pts**.
-- [ ] Générer une clé enfant — **2 pts**.
+- [x] Extraire la clé publique maître — **2 pts**.
+- [x] Générer une clé enfant — **2 pts**.
 - [ ] Générer une clé enfant à l’index N — **2 pts**.
 - [ ] Générer une clé enfant à l’index N au niveau de dérivation M — **2 pts**.

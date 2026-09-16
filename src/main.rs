@@ -22,4 +22,9 @@ fn main() {
 
     let master_public_key = MasterPublicKey::from(&mpk);
     println!("Master Public Key: {master_public_key:?}");
+
+    let (child_public_key, child_chain_code) = master_public_key.generate_child_key(cc);
+
+    println!("Child Public Key: {child_public_key:?}");
+    println!("Child Chain Code: {child_chain_code:?}");
 }
