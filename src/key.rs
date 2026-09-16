@@ -17,7 +17,7 @@ impl From<&[u8]> for MasterPrivateKey {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct ChainCode {
     inner: [u8; 32],
 }
@@ -36,15 +36,15 @@ impl From<&[u8]> for ChainCode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct MasterPublicKey {
     inner: [u8; 33],
 }
 
 impl MasterPublicKey {
-    pub(crate) fn generate_n_child_key(
+    pub(crate) fn generate_child_key(
         &self,
-        chaincode: ChainCode,
+        chaincode: &ChainCode,
         index: u32,
     ) -> (MasterPublicKey, ChainCode) {
         let mut data = [0u8; 37];
@@ -66,21 +66,39 @@ impl MasterPublicKey {
         )
     }
 
-    pub(crate) fn generate_nth_child_key(
+    pub(crate) fn generate_mth_0_child_key(
         &self,
-        chaincode: ChainCode,
-        n: u32,
+        chaincode: &ChainCode,
+        level: u32,
     ) -> (MasterPublicKey, ChainCode) {
-        let (mut current_key, mut current_chaincode) = self.generate_n_child_key(chaincode, 0);
+        if level == 0 {
+            return (self.clone(), chaincode.clone());
+        }
 
-        for index in 1..n {
-            let (next_key, next_chaincode) =
-                current_key.generate_n_child_key(current_chaincode, index);
+        let (mut current_key, mut current_chaincode) = self.generate_child_key(chaincode, 0);
+
+        for _ in 1..level {
+            let (next_key, next_chaincode) = current_key.generate_child_key(&current_chaincode, 0);
+
             current_key = next_key;
             current_chaincode = next_chaincode;
         }
 
         (current_key, current_chaincode)
+    }
+
+    pub(crate) fn generate_nth_mth_0_child_key(
+        &self,
+        chaincode: &ChainCode,
+        index: u32,
+        level: u32,
+    ) -> (MasterPublicKey, ChainCode) {
+        if level == 0 {
+            return self.generate_child_key(chaincode, index);
+        }
+
+        let (mpk, cc) = self.generate_mth_0_child_key(chaincode, level - 1);
+        mpk.generate_child_key(&cc, index)
     }
 }
 
