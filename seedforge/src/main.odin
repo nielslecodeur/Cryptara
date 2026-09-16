@@ -10,8 +10,6 @@ get_bytes_ptr :: proc "c" (out: rawptr) {
 	entropy := generate_entropy()
 	bytes := get_bytes(&entropy)
 
-	bytes[16] &= 0xF0
-
 	dst := cast(^[17]u8)out
 	dst^ = bytes
 }

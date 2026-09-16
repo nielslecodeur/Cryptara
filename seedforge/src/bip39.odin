@@ -37,7 +37,7 @@ get_bytes :: proc(entropy: ^[16]u8) -> (bytes: [17]u8) {
 	hash := sha256(entropy[:])
 
 	copy(bytes[0:16], entropy[:])
-	bytes[16] = hash[0]
+	bytes[16] = hash[0] & 0xF0
 
 	return bytes
 }
