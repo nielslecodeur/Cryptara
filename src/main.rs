@@ -1,3 +1,8 @@
+mod seedforge;
+
+use seedforge::Seed;
+
 fn main() {
-    println!("Hello, world!");
+    let bytes = Seed::generate();
+    println!("{:?}", bytes.as_words().unwrap());
 }
