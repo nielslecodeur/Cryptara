@@ -1,0 +1,48 @@
+=== STRUCTURE ===
+src/key.rs
+src/ffi.rs
+src/helpers.rs
+src/main.rs
+src/cli.rs
+src/seed.rs
+
+=== Cargo.toml ===
+[package]
+name = "cryptara"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
+hex = "0.4.3"
+hmac-sha512 = "1.1.12"
+k256 = "0.14.0"
+pbkdf2 = { version = "0.13", default-features = false, features = ["hmac"] }
+sha2 = "0.11"
+
+=== cargo check ===
+   Compiling cryptara v0.1.0 (/Users/enzoblain/Cours/BP/TD2)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.94s
+
+=== TESTS ===
+--- generate ---
+125befc5fc5e9bec97594aad076528b4b0
+--- generate --mnemonic ---
+mother youth sure where file post random minute gun endorse ketchup thunder
+--- verify (valide) ---
+Mnemonic valide.
+--- verify (invalide) ---
+Mnemonic valide.
+--- root --mnemonic ---
+c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04
+--- master ---
+Master private key: MasterPrivateKey { inner: [230, 74, 14, 154, 191, 240, 60, 16, 51, 92, 4, 64, 169, 252, 192, 22, 53, 226, 25, 86, 254, 122, 168, 132, 13, 220, 103, 14, 3, 202, 12, 176] }
+Master public key : 02a9caa2c566a8d9ce2c14936ed0f50c14bfd04b0c30201b96aa10e71ce693721b
+Chain code        : 12bd4467e73ca416e922fdeb4fe0623cc4dd29178d39b0177aa73c47f6fb33b5
+--- wallet --mnemonic ---
+Mnemonic  : abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about
+Root seed : c55257c360c07c72029aebc1b53c05ed0362ada38ead3e3e9efa3708e53495531f09a6987599d18264c1e1c92f2cf141630c7a3c4ab7c81b2f001698e7463b04
+Master private key: MasterPrivateKey { inner: [230, 74, 14, 154, 191, 240, 60, 16, 51, 92, 4, 64, 169, 252, 192, 22, 53, 226, 25, 86, 254, 122, 168, 132, 13, 220, 103, 14, 3, 202, 12, 176] }
+Master public key : 02a9caa2c566a8d9ce2c14936ed0f50c14bfd04b0c30201b96aa10e71ce693721b
+Chain code        : 12bd4467e73ca416e922fdeb4fe0623cc4dd29178d39b0177aa73c47f6fb33b5
+--- init ---
