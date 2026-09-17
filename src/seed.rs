@@ -22,7 +22,7 @@ impl Seed {
     }
 
     #[allow(unused)]
-    fn from_bytes(bytes: &[u8; 17]) -> Self {
+    pub(crate) fn from_bytes(bytes: &[u8; 17]) -> Self {
         let entropy: [u8; 16] = bytes[..16].try_into().unwrap();
 
         let last = bytes[16];
@@ -37,7 +37,7 @@ impl Seed {
     }
 
     #[allow(unused)]
-    fn as_bytes(&self) -> [u8; 17] {
+    pub(crate) fn as_bytes(&self) -> [u8; 17] {
         let mut bytes = [0u8; 17];
 
         bytes[..16].copy_from_slice(&self.entropy);
@@ -137,20 +137,3 @@ mod tests {
         assert_eq!(root_seed.to_vec(), expected);
     }
 }
-
-// pub(crate) fn extract_keys(&self) -> Result<(MasterPrivateKey, ChainCode), &'static str> {
-//     let mac = HMAC::mac(b"Bitcoin seed", self.inner);
-//
-//     let master_private_key = MasterPrivateKey::try_from(&mac[..32])?;
-//     let chain_code = ChainCode::try_from(&mac[32..])?;
-//
-//     Ok((master_private_key, chain_code))
-// }
-//
-// impl PartialEq for Seed {
-//     fn eq(&self, other: &Seed) -> bool {
-//         self.inner == other.inner
-//     }
-// }
-//
-// impl Eq for Seed {}

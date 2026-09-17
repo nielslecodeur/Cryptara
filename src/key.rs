@@ -65,6 +65,10 @@ pub(crate) struct MasterPublicKey {
 }
 
 impl MasterPublicKey {
+    pub(crate) fn bytes(&self) -> &[u8; 33] {
+        &self.inner
+    }
+
     #[allow(unused)]
     pub(crate) fn generate_child_key(
         &self,
