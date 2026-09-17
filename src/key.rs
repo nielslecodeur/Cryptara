@@ -1,12 +1,24 @@
 use hmac_sha512::HMAC;
-use k256::{
-    ProjectivePoint, PublicKey, Scalar, SecretKey,
-    elliptic_curve::{PrimeField, sec1::ToSec1Point},
-};
+use k256::elliptic_curve::PrimeField;
+use k256::elliptic_curve::sec1::ToSec1Point;
+use k256::{ProjectivePoint, PublicKey, Scalar, SecretKey};
 
+#[allow(unused)]
 #[derive(Debug)]
 pub(crate) struct MasterPrivateKey {
     inner: [u8; 32],
+}
+
+impl MasterPrivateKey {
+    #[allow(unused)]
+    pub(crate) fn from_root_seed(root_seed: &[u8; 64]) -> Result<(Self, ChainCode), &'static str> {
+        let mac = HMAC::mac(b"Bitcoin seed", root_seed);
+
+        let master_private_key = MasterPrivateKey::try_from(&mac[..32])?;
+        let chain_code = ChainCode::try_from(&mac[32..])?;
+
+        Ok((master_private_key, chain_code))
+    }
 }
 
 impl TryFrom<&[u8]> for MasterPrivateKey {
@@ -21,12 +33,14 @@ impl TryFrom<&[u8]> for MasterPrivateKey {
     }
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub(crate) struct ChainCode {
     inner: [u8; 32],
 }
 
 impl ChainCode {
+    #[allow(unused)]
     pub(crate) fn bytes(&self) -> &[u8; 32] {
         &self.inner
     }
@@ -44,12 +58,14 @@ impl TryFrom<&[u8]> for ChainCode {
     }
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub(crate) struct MasterPublicKey {
     inner: [u8; 33],
 }
 
 impl MasterPublicKey {
+    #[allow(unused)]
     pub(crate) fn generate_child_key(
         &self,
         chaincode: &ChainCode,
@@ -70,29 +86,22 @@ impl MasterPublicKey {
             .ok_or("invalid scalar derived from HMAC")?;
 
         let child = parent.to_projective() + ProjectivePoint::GENERATOR * tweak;
-
         let child =
             PublicKey::from_affine(child.to_affine()).map_err(|_| "invalid child public key")?;
 
-        let public_key_bytes: [u8; 33] = child
+        let public_key: MasterPublicKey = child
             .to_sec1_bytes()
             .as_ref()
             .try_into()
             .map_err(|_| "invalid child public key length")?;
-        let chain_code_bytes: [u8; 32] = mac[32..]
+        let chain_code: ChainCode = mac[32..]
             .try_into()
             .map_err(|_| "invalid chain code length")?;
 
-        Ok((
-            MasterPublicKey {
-                inner: public_key_bytes,
-            },
-            ChainCode {
-                inner: chain_code_bytes,
-            },
-        ))
+        Ok((public_key, chain_code))
     }
 
+    #[allow(unused)]
     pub(crate) fn generate_mth_0_child_key(
         &self,
         chaincode: &ChainCode,
@@ -114,6 +123,7 @@ impl MasterPublicKey {
         Ok((current_key, current_chaincode))
     }
 
+    #[allow(unused)]
     pub(crate) fn generate_nth_mth_0_child_key(
         &self,
         chaincode: &ChainCode,
@@ -148,10 +158,10 @@ impl TryFrom<&MasterPrivateKey> for MasterPublicKey {
     }
 }
 
-impl TryFrom<Box<[u8]>> for MasterPublicKey {
+impl TryFrom<&[u8]> for MasterPublicKey {
     type Error = &'static str;
 
-    fn try_from(bytes: Box<[u8]>) -> Result<Self, Self::Error> {
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         let inner: [u8; 33] = bytes
             .as_ref()
             .try_into()
